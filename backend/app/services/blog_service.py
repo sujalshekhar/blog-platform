@@ -1,13 +1,19 @@
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import HTTPException
+import json
+from fastapi import HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.models.blog import Blog
 from app.models.user import User
+from app.models.notification import Notification
 from app.enums.blog_status import BlogStatus
 from app.enums.role import UserRole
+from app.enums.notification_type import NotificationType
 from app.schemas.blog import BlogCreate, BlogUpdate, BlogResponse
 from app.repositories.blog_repository import BlogRepository
+from app.repositories.user_repository import UserRepository
+from app.repositories.notification_repository import NotificationRepository
+from app.sse.manager import manager
 
 class BlogService:
     def __init__(self, db: Session):
@@ -83,7 +89,7 @@ class BlogService:
         new_version = self.repo.create_version(new_blog)
         return BlogResponse.model_validate(new_version)
 
-    def submit_blog(self, blog_id: int, user: User) -> BlogResponse:
+    def submit_blog(self, blog_id: int, user: User, background_tasks: BackgroundTasks) -> BlogResponse:
         blog = self.repo.get_active_by_group_id(blog_id)
         if not blog:
             raise HTTPException(status_code=404, detail="Blog not found")
@@ -95,9 +101,35 @@ class BlogService:
         blog.status = BlogStatus.PENDING
         self.db.commit()
         self.db.refresh(blog)
+        
+        # Notify admins and approvers
+        user_repo = UserRepository(self.db)
+        notif_repo = NotificationRepository(self.db)
+        admins_and_approvers = user_repo.get_by_roles([UserRole.ADMIN, UserRole.APPROVER])
+        
+        message_data = {
+            "title": "New Blog Submission",
+            "message": f"'{blog.title}' was submitted for review by {user.first_name}.",
+            "blog_id": blog.blog_group_id
+        }
+        
+        for u in admins_and_approvers:
+            notif = Notification(
+                user_id=u.id,
+                type=NotificationType.BLOG_PENDING,
+                content=json.dumps(message_data),
+            )
+            notif_repo.create(notif)
+            
+        background_tasks.add_task(
+            manager.broadcast_to_roles, 
+            message_data, 
+            [UserRole.ADMIN, UserRole.APPROVER]
+        )
+        
         return BlogResponse.model_validate(blog)
 
-    def approve_blog(self, blog_id: int, approver: User) -> BlogResponse:
+    def approve_blog(self, blog_id: int, approver: User, background_tasks: BackgroundTasks) -> BlogResponse:
         blog = self.repo.get_active_by_group_id(blog_id)
         if not blog:
             raise HTTPException(status_code=404, detail="Blog not found")
@@ -107,9 +139,30 @@ class BlogService:
         blog.approved_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(blog)
+        
+        # Notify the author
+        notif_repo = NotificationRepository(self.db)
+        message_data = {
+            "title": "Blog Approved",
+            "message": f"Your blog '{blog.title}' has been approved!",
+            "blog_id": blog.blog_group_id
+        }
+        notif = Notification(
+            user_id=blog.author_id,
+            type=NotificationType.BLOG_APPROVED,
+            content=json.dumps(message_data),
+        )
+        notif_repo.create(notif)
+        
+        background_tasks.add_task(
+            manager.send_personal_message,
+            message_data,
+            blog.author_id
+        )
+        
         return BlogResponse.model_validate(blog)
 
-    def reject_blog(self, blog_id: int, approver: User) -> BlogResponse:
+    def reject_blog(self, blog_id: int, approver: User, background_tasks: BackgroundTasks) -> BlogResponse:
         blog = self.repo.get_active_by_group_id(blog_id)
         if not blog:
             raise HTTPException(status_code=404, detail="Blog not found")
@@ -119,6 +172,27 @@ class BlogService:
         blog.approved_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(blog)
+        
+        # Notify the author
+        notif_repo = NotificationRepository(self.db)
+        message_data = {
+            "title": "Blog Rejected",
+            "message": f"Your blog '{blog.title}' has been rejected.",
+            "blog_id": blog.blog_group_id
+        }
+        notif = Notification(
+            user_id=blog.author_id,
+            type=NotificationType.BLOG_REJECTED,
+            content=json.dumps(message_data),
+        )
+        notif_repo.create(notif)
+        
+        background_tasks.add_task(
+            manager.send_personal_message,
+            message_data,
+            blog.author_id
+        )
+        
         return BlogResponse.model_validate(blog)
 
     def delete_blog(self, blog_id: int, user: User):

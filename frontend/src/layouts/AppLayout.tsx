@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
+import { NotificationsPopover } from "@/components/NotificationsPopover";
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -11,6 +12,7 @@ export const AppLayout = () => {
     { name: "All Blogs", href: "/blogs" },
     { name: "My Blogs", href: "/my-blogs" },
     { name: "My Drafts", href: "/my-drafts" },
+    { name: "Features", href: "/features" },
     ...(user?.role === "ADMIN" || user?.role === "APPROVER"
       ? [{ name: "Pending Approvals", href: "/pending" }]
       : []),
@@ -41,6 +43,7 @@ export const AppLayout = () => {
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationsPopover />
             <span className="text-sm font-medium text-muted-foreground hidden md:inline-block bg-secondary/50 px-3 py-1 rounded-full">
               {user?.first_name} {user?.last_name} <span className="opacity-60 ml-1">({user?.role})</span>
             </span>

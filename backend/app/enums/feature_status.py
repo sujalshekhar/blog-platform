@@ -7,3 +7,4 @@ class FeatureStatus(str, Enum):
     PENDING = "PENDING"
     ACCEPTED = "ACCEPTED"
     DECLINED = "DECLINED"
+    COMPLETED = "COMPLETED"

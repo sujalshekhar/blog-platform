@@ -29,7 +29,14 @@ def get_current_user(
     5. Return User object.
     """
 
-    payload = decode_access_token(token)
+    try:
+        payload = decode_access_token(token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     user_id = payload.get("sub")
 

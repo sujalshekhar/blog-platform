@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.dependencies.auth import get_current_user, require_roles
@@ -91,29 +91,32 @@ def delete_blog(
 @router.post("/{blog_id}/submit", response_model=BlogResponse)
 def submit_blog(
     blog_id: int,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Submit a DRAFT blog for approval (changes status to PENDING). Must be author."""
-    return BlogService(db).submit_blog(blog_id, current_user)
+    return BlogService(db).submit_blog(blog_id, current_user, background_tasks)
 
 @router.post("/{blog_id}/approve", response_model=BlogResponse)
 def approve_blog(
     blog_id: int,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.APPROVER)),
     db: Session = Depends(get_db)
 ):
     """Approve a pending blog. Required: ADMIN or APPROVER."""
-    return BlogService(db).approve_blog(blog_id, current_user)
+    return BlogService(db).approve_blog(blog_id, current_user, background_tasks)
 
 @router.post("/{blog_id}/reject", response_model=BlogResponse)
 def reject_blog(
     blog_id: int,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.APPROVER)),
     db: Session = Depends(get_db)
 ):
     """Reject a pending blog. Required: ADMIN or APPROVER."""
-    return BlogService(db).reject_blog(blog_id, current_user)
+    return BlogService(db).reject_blog(blog_id, current_user, background_tasks)
 
 @router.get("/{blog_id}/history", response_model=List[BlogResponse])
 def get_blog_history(

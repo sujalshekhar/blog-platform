@@ -13,6 +13,7 @@ import { BlogDetails } from "./pages/BlogDetails";
 import { EditBlog } from "./pages/EditBlog";
 import { PendingApprovals } from "./pages/PendingApprovals";
 import { BlogHistory } from "./pages/BlogHistory";
+import { FeatureRequests } from "./pages/FeatureRequests";
 
 const NotFound = () => <div className="text-center p-8 text-2xl font-bold">404 Not Found</div>;
 
@@ -37,6 +38,7 @@ export function App() {
           <Route path="/blogs/:id" element={<BlogDetails />} />
           <Route path="/blogs/:id/edit" element={<EditBlog />} />
           <Route path="/blogs/:id/history" element={<BlogHistory />} />
+          <Route path="/features" element={<FeatureRequests />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
