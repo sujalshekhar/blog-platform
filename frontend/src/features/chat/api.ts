@@ -34,8 +34,8 @@ export const chatApi = {
 export const useChatHistory = (blogGroupId: number) => {
   return useInfiniteQuery({
     queryKey: QUERY_KEYS.CHAT.HISTORY(blogGroupId),
-    queryFn: ({ pageParam }) => chatApi.getChatHistory(blogGroupId, pageParam as number | undefined),
-    initialPageParam: undefined,
+    queryFn: ({ pageParam }) => chatApi.getChatHistory(blogGroupId, pageParam),
+    initialPageParam: undefined as number | undefined,
     getNextPageParam: (lastPage) => {
       // The backend returns them chronologically (oldest first). 
       // The first item is the oldest message we fetched in this batch.
