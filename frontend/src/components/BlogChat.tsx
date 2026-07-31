@@ -32,7 +32,7 @@ export function BlogChat({ blogGroupId }: BlogChatProps) {
   const historyMessages = data ? [...data.pages].reverse().flatMap(page => page) : [];
   
   const allMessages = React.useMemo(() => {
-    const combined = [];
+    const combined: Message[] = [];
     const seen = new Set();
     for (const msg of [...historyMessages, ...newMessages]) {
       if (!seen.has(msg.id)) {
