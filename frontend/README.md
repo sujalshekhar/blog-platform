@@ -2,6 +2,10 @@
 
 This is the sleek, responsive, and highly interactive frontend for the BlogPlatform. It focuses on providing a premium user experience with real-time updates and seamless navigation.
 
+### 🔴 Live Demo
+- **Frontend:** [https://blog.sujalshekhar.com/](https://blog.sujalshekhar.com/)
+- **Backend API:** [https://blog-platform-md24.onrender.com/docs](https://blog-platform-md24.onrender.com/docs)
+
 ---
 
 ## 🛠️ Technology Stack & Rationale
@@ -83,9 +87,9 @@ npm install
 
 ### 3. Environment Variables (For Vercel Deployment)
 If deploying to a different domain than your backend (e.g., Vercel + Render), you must provide the backend API URL:
-Create a `.env` file in the frontend root:
+Create a `.env` file in the frontend root (or configure in Vercel settings):
 ```env
-VITE_API_URL=https://your-api.onrender.com/api/v1
+VITE_API_URL=https://blog-platform-md24.onrender.com/api/v1
 ```
 *(Leave empty for local Docker proxying).*
 

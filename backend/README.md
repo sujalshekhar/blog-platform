@@ -2,6 +2,10 @@
 
 This is the highly scalable, event-driven FastAPI backend powering the BlogPlatform. It is designed following strict enterprise patterns to ensure performance, maintainability, and data integrity.
 
+### 🔴 Live API Docs
+- **Swagger UI:** [https://blog-platform-md24.onrender.com/docs](https://blog-platform-md24.onrender.com/docs)
+- **Frontend:** [https://blog.sujalshekhar.com/](https://blog.sujalshekhar.com/)
+
 ---
 
 ## 🛠️ Technology Stack & Rationale
@@ -106,7 +110,7 @@ JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 # CORS Configuration (Required if Frontend is on a different domain like Vercel)
-FRONTEND_URL=https://your-frontend.vercel.app
+FRONTEND_URL=https://blog.sujalshekhar.com
 ```
 
 ### 5. Run the Server
