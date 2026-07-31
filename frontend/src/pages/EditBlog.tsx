@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -25,6 +32,7 @@ const blogSchema = z.object({
   title: z.string().min(1, { message: "Title is required" }).max(255),
   content: z.string().min(10, { message: "Content must be at least 10 characters" }),
   cover_image_url: z.string().url({ message: "Must be a valid URL" }).optional().or(z.literal("")),
+  blog_type: z.enum(["ARTICLE", "TUTORIAL", "NEWS", "OPINION"]),
 });
 
 export const EditBlog = () => {
@@ -38,7 +46,7 @@ export const EditBlog = () => {
 
   const form = useForm<z.infer<typeof blogSchema>>({
     resolver: zodResolver(blogSchema),
-    defaultValues: { title: "", content: "", cover_image_url: "" },
+    defaultValues: { title: "", content: "", cover_image_url: "", blog_type: "ARTICLE" },
   });
 
   // Populate form when blog loads
@@ -48,6 +56,7 @@ export const EditBlog = () => {
         title: blog.title,
         content: blog.content,
         cover_image_url: blog.cover_image_url || "",
+        blog_type: blog.blog_type,
       });
     }
   }, [blog, form]);
@@ -108,6 +117,30 @@ export const EditBlog = () => {
                     <FormControl>
                       <Input placeholder="An interesting title..." {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="blog_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Blog Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a blog type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ARTICLE">Article</SelectItem>
+                        <SelectItem value="TUTORIAL">Tutorial</SelectItem>
+                        <SelectItem value="NEWS">News</SelectItem>
+                        <SelectItem value="OPINION">Opinion</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

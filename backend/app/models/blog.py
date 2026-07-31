@@ -15,6 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.enums.blog_status import BlogStatus
+from app.enums.blog_type import BlogType
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -54,6 +55,13 @@ class Blog(Base):
         Enum(BlogStatus, name="blog_status", inherit_schema=True),
         default=BlogStatus.DRAFT,
         server_default=BlogStatus.DRAFT.value,
+        nullable=False,
+    )
+
+    blog_type: Mapped[BlogType] = mapped_column(
+        Enum(BlogType, name="blog_type", inherit_schema=True),
+        default=BlogType.ARTICLE,
+        server_default=BlogType.ARTICLE.value,
         nullable=False,
     )
 

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.models.notification import Notification
 
 class NotificationRepository:
@@ -8,9 +8,12 @@ class NotificationRepository:
 
     def create(self, notification: Notification) -> Notification:
         self.db.add(notification)
-        self.db.commit()
-        self.db.refresh(notification)
+        self.db.flush()
         return notification
+
+    def bulk_create(self, notifications: List[Notification]):
+        self.db.add_all(notifications)
+        self.db.flush()
 
     def get_by_user_id(self, user_id: int, skip: int = 0, limit: int = 50) -> List[Notification]:
         return (
@@ -22,10 +25,5 @@ class NotificationRepository:
             .all()
         )
 
-    def mark_as_read(self, notification_id: int) -> bool:
-        notification = self.db.query(Notification).filter(Notification.id == notification_id).first()
-        if notification:
-            notification.is_read = True
-            self.db.commit()
-            return True
-        return False
+    def get_by_id(self, notification_id: int) -> Optional[Notification]:
+        return self.db.query(Notification).filter(Notification.id == notification_id).first()

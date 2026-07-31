@@ -12,37 +12,7 @@ from app.enums.blog_status import BlogStatus
 from app.enums.feature_status import FeatureStatus
 from app.enums.notification_type import NotificationType
 
-
-# ── Helpers ────────────────────────────────────────────────────────────────────
-
-def make_user(db: Session, email: str, first_name: str = "Test") -> User:
-    user = User(
-        first_name=first_name,
-        last_name="User",
-        email=email,
-        password_hash="hashed_pw",
-        role=UserRole.USER,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-def make_blog(db: Session, user: User, group_id: int = 1) -> Blog:
-    blog = Blog(
-        blog_group_id=group_id,
-        version=1,
-        title="Test Blog",
-        content="Some content",
-        status=BlogStatus.DRAFT,
-        author_id=user.id,
-    )
-    db.add(blog)
-    db.commit()
-    db.refresh(blog)
-    return blog
-
+from tests.conftest import make_user, make_blog
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
 

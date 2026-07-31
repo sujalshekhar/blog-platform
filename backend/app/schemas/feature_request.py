@@ -15,6 +15,9 @@ class FeatureRequestUpdate(BaseModel):
     priority: Optional[int] = None
     category: Optional[str] = None
 
+class FeatureRequestStatusUpdate(BaseModel):
+    status: FeatureStatus
+
 class FeatureRequestResponse(BaseModel):
     id: int
     title: str

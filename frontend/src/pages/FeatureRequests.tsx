@@ -3,9 +3,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { 
   useFeatureRequests, 
   useCreateFeatureRequest, 
-  useAcceptFeatureRequest, 
-  useDeclineFeatureRequest, 
-  useCompleteFeatureRequest 
+  useUpdateFeatureRequestStatus
 } from "@/features/featureRequests/api";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,9 +17,7 @@ export function FeatureRequests() {
   const { user } = useAuth();
   const { data: featureRequests = [], isLoading } = useFeatureRequests();
   const createMutation = useCreateFeatureRequest();
-  const acceptMutation = useAcceptFeatureRequest();
-  const declineMutation = useDeclineFeatureRequest();
-  const completeMutation = useCompleteFeatureRequest();
+  const updateStatusMutation = useUpdateFeatureRequestStatus();
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -147,16 +143,16 @@ export function FeatureRequests() {
               <CardFooter className="pt-3 border-t flex gap-2 justify-end bg-secondary/20">
                 {fr.status === "PENDING" && (
                   <>
-                    <Button variant="outline" size="sm" onClick={() => declineMutation.mutate(fr.id)} disabled={declineMutation.isPending}>
+                    <Button variant="outline" size="sm" onClick={() => updateStatusMutation.mutate({ id: fr.id, status: "DECLINED" })} disabled={updateStatusMutation.isPending}>
                       Decline
                     </Button>
-                    <Button size="sm" onClick={() => acceptMutation.mutate(fr.id)} disabled={acceptMutation.isPending}>
+                    <Button size="sm" onClick={() => updateStatusMutation.mutate({ id: fr.id, status: "ACCEPTED" })} disabled={updateStatusMutation.isPending}>
                       Accept
                     </Button>
                   </>
                 )}
                 {fr.status === "ACCEPTED" && (
-                  <Button size="sm" onClick={() => completeMutation.mutate(fr.id)} disabled={completeMutation.isPending} className="w-full">
+                  <Button size="sm" onClick={() => updateStatusMutation.mutate({ id: fr.id, status: "COMPLETED" })} disabled={updateStatusMutation.isPending} className="w-full">
                     Mark as Completed
                   </Button>
                 )}

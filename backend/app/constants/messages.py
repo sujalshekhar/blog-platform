@@ -1,0 +1,11 @@
+# Exception messages
+ERR_BLOG_NOT_FOUND = "Blog not found"
+ERR_UNAUTHORIZED_UPDATE = "Not authorized to update this blog"
+ERR_UNAUTHORIZED_SUBMIT = "Not authorized to submit this blog"
+ERR_UNAUTHORIZED_DELETE = "Not authorized to delete this blog"
+ERR_ONLY_DRAFT_SUBMIT = "Only DRAFT blogs can be submitted"
+ERR_CHAT_NOT_PUBLIC = "Chat is only available for public (approved) blogs."
+ERR_FEATURE_REQUEST_NOT_FOUND = "Feature request not found"
+ERR_UNAUTHORIZED_FEATURE_UPDATE = "Not authorized to update this request"
+ERR_ONLY_PENDING_UPDATE = "Only PENDING requests can be updated"
+ERR_FEATURE_ALREADY_ACTIONED = "Feature request is already completed or rejected"

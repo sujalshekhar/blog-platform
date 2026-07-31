@@ -21,7 +21,12 @@ def register(
     request: RegisterRequest,
     db: Session = Depends(get_db),
 ):
-    """Register a new user."""
+    """
+    Register a new user account.
+
+    Creates a new user with the specified email, password, and personal details.
+    The email must be unique across the platform.
+    """
     return AuthService(db).register_user(request)
 
 
@@ -33,6 +38,12 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    """Authenticate user and return JWT."""
+    """
+    Authenticate user and generate JWT token.
+
+    Validates the provided email and password. On success, returns an OAuth2 
+    compatible Bearer token that must be included in the Authorization header 
+    for subsequent authenticated requests.
+    """
     request = LoginRequest(email=form_data.username, password=form_data.password)
     return AuthService(db).login_user(request)

@@ -28,8 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isAuthenticated) {
       const token = getToken();
       if (token) {
-        const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-        eventSource = new EventSource(`${baseUrl}/api/v1/sse/stream?token=${token}`);
+        const apiUrl = import.meta.env.VITE_API_URL || "/api/v1";
+        eventSource = new EventSource(`${apiUrl}/sse/stream?token=${token}`);
 
         eventSource.addEventListener("notification", (event) => {
           try {

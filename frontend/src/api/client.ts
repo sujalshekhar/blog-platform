@@ -6,7 +6,7 @@ export const setToken = (token: string) => localStorage.setItem('token', token);
 export const removeToken = () => localStorage.removeItem('token');
 
 export const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

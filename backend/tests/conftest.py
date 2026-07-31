@@ -52,3 +52,60 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+# ── Shared Test Helpers ─────────────────────────────────────────────────────────
+
+from app.models.user import User
+from app.models.blog import Blog
+from app.enums.role import UserRole
+from app.enums.blog_status import BlogStatus
+from app.core.security import create_access_token
+from datetime import timedelta
+
+def make_user(db: Session, email: str, first_name: str = "Test", role: UserRole = UserRole.USER) -> User:
+    user = User(
+        first_name=first_name,
+        last_name="User",
+        email=email,
+        password_hash="$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW", # "password"
+        role=role,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+def make_blog(db: Session, user: User, group_id: int = 1, status: BlogStatus = BlogStatus.DRAFT) -> Blog:
+    blog = Blog(
+        blog_group_id=group_id,
+        version=1,
+        title="Test Blog",
+        content="Some content",
+        status=status,
+        author_id=user.id,
+    )
+    db.add(blog)
+    db.commit()
+    db.refresh(blog)
+    return blog
+
+def get_auth_headers_for_user(user: User) -> dict:
+    access_token = create_access_token(
+        data={"sub": str(user.id), "role": user.role.value}
+    )
+    return {"Authorization": f"Bearer {access_token}"}
+
+@pytest.fixture
+def auth_headers(db_session: Session) -> dict:
+    user = make_user(db_session, "user@example.com", "TestUser", UserRole.USER)
+    return get_auth_headers_for_user(user)
+
+@pytest.fixture
+def approver_headers(db_session: Session) -> dict:
+    user = make_user(db_session, "approver@example.com", "Approver", UserRole.APPROVER)
+    return get_auth_headers_for_user(user)
+
+@pytest.fixture
+def admin_headers(db_session: Session) -> dict:
+    user = make_user(db_session, "admin@example.com", "Admin", UserRole.ADMIN)
+    return get_auth_headers_for_user(user)

@@ -9,11 +9,13 @@ export interface User {
 }
 
 export type BlogStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
+export type BlogType = "ARTICLE" | "TUTORIAL" | "NEWS" | "OPINION";
 
 export interface Blog {
   id: number;
   blog_group_id: number;
   version: number;
+  blog_type: BlogType;
   title: string;
   content: string;
   cover_image_url?: string | null;

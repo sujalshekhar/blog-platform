@@ -9,8 +9,7 @@ class FeatureRequestRepository:
 
     def create(self, feature_request: FeatureRequest) -> FeatureRequest:
         self.db.add(feature_request)
-        self.db.commit()
-        self.db.refresh(feature_request)
+        self.db.flush()
         return feature_request
 
     def get_by_id(self, request_id: int) -> Optional[FeatureRequest]:
@@ -26,6 +25,5 @@ class FeatureRequestRepository:
         req = self.get_by_id(request_id)
         if req:
             req.status = status
-            self.db.commit()
-            self.db.refresh(req)
+            self.db.flush()
         return req

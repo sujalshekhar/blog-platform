@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useBlog, blogsApi } from "@/features/blogs/api";
+import { BlogChat } from "@/components/BlogChat";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -195,6 +196,10 @@ export const BlogDetails = () => {
         className="prose prose-slate dark:prose-invert prose-lg md:prose-xl max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-2xl prose-img:shadow-lg prose-p:leading-relaxed"
         dangerouslySetInnerHTML={{ __html: blog.content }} 
       />
+
+      {blog.status === "APPROVED" && (
+        <BlogChat blogGroupId={blog.blog_group_id} />
+      )}
     </div>
   );
 };

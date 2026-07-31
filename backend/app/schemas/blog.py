@@ -1,12 +1,14 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.enums.blog_status import BlogStatus
+from app.enums.blog_type import BlogType
 
 class BlogBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     content: str = Field(..., min_length=1)
     cover_image_url: Optional[str] = None
+    blog_type: BlogType = BlogType.ARTICLE
 
 class BlogCreate(BlogBase):
     pass
@@ -19,8 +21,7 @@ class UserSummary(BaseModel):
     first_name: str
     last_name: Optional[str] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class BlogResponse(BlogBase):
     id: int
@@ -35,5 +36,4 @@ class BlogResponse(BlogBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

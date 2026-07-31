@@ -14,14 +14,24 @@ class BlogRepository:
             .first()
         )
 
-    def get_all_active_approved(self, skip: int = 0, limit: int = 100) -> List[Blog]:
-        return (
-            self.db.query(Blog)
-            .filter(Blog.is_active_version == True, Blog.status == BlogStatus.APPROVED)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+    def get_all_active_approved(self, skip: int = 0, limit: int = 100, search: Optional[str] = None, blog_type: Optional[str] = None, sort_by: Optional[str] = None, sort_order: Optional[str] = None) -> List[Blog]:
+        query = self.db.query(Blog).filter(Blog.is_active_version == True, Blog.status == BlogStatus.APPROVED)
+        
+        if search:
+            query = query.filter(Blog.title.ilike(f"%{search}%"))
+        if blog_type:
+            query = query.filter(Blog.blog_type == blog_type)
+            
+        if sort_by:
+            column = getattr(Blog, sort_by, Blog.created_at)
+            if sort_order == "asc":
+                query = query.order_by(column.asc())
+            else:
+                query = query.order_by(column.desc())
+        else:
+            query = query.order_by(Blog.created_at.desc())
+            
+        return query.offset(skip).limit(limit).all()
 
     def get_all_active_by_author(self, author_id: int, skip: int = 0, limit: int = 100) -> List[Blog]:
         return (
@@ -62,11 +72,10 @@ class BlogRepository:
 
     def create_version(self, blog: Blog) -> Blog:
         self.db.add(blog)
-        self.db.commit()
-        self.db.refresh(blog)
+        self.db.flush()
         return blog
 
     def mark_inactive(self, group_id: int):
         self.db.query(Blog).filter(Blog.blog_group_id == group_id).update({"is_active_version": False})
-        self.db.commit()
+        self.db.flush()
 

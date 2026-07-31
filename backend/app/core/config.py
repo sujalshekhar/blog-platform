@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Database Settings
     DATABASE_URL: str = Field(default="postgresql://blog_user:blog_password@localhost:5432/blog_db")
 
+    # Frontend Settings
+    FRONTEND_URL: str = Field(default="http://localhost:5173")
+
     # JWT Settings
     JWT_SECRET: str = Field(default="super-secret-jwt-key-change-in-production")
     JWT_ALGORITHM: str = Field(default="HS256")
@@ -26,5 +29,6 @@ class Settings(BaseSettings):
 
     # Redis Settings
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
+    REDIS_TTL: int = Field(default=3600)
 
 settings = Settings()

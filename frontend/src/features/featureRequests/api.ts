@@ -1,12 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
 import { toast } from "sonner";
+import { API_PATHS } from "@/constants/apiPaths";
+import { QUERY_KEYS } from "@/constants/queryKeys";
 
 export type FeatureStatus = "PENDING" | "ACCEPTED" | "DECLINED" | "COMPLETED";
 
 export interface FeatureRequest {
   id: number;
-  title: str;
+  title: string;
   description: string;
   status: FeatureStatus;
   priority: number;
@@ -24,42 +26,39 @@ export interface FeatureRequestCreate {
 }
 
 export const featureRequestsApi = {
+  /** Fetch all feature requests (admin sees all, users see their own) */
   getFeatureRequests: async (): Promise<FeatureRequest[]> => {
-    const response = await apiClient.get("/feature-requests/");
+    const response = await apiClient.get(API_PATHS.FEATURE_REQUESTS.BASE);
     return response.data;
   },
+  /** Create a new feature request */
   createFeatureRequest: async (data: FeatureRequestCreate): Promise<FeatureRequest> => {
-    const response = await apiClient.post("/feature-requests/", data);
+    const response = await apiClient.post(API_PATHS.FEATURE_REQUESTS.BASE, data);
     return response.data;
   },
-  acceptFeatureRequest: async (id: number): Promise<FeatureRequest> => {
-    const response = await apiClient.post(`/feature-requests/${id}/accept`);
-    return response.data;
-  },
-  declineFeatureRequest: async (id: number): Promise<FeatureRequest> => {
-    const response = await apiClient.post(`/feature-requests/${id}/decline`);
-    return response.data;
-  },
-  completeFeatureRequest: async (id: number): Promise<FeatureRequest> => {
-    const response = await apiClient.post(`/feature-requests/${id}/complete`);
+  /** Update the status of a feature request (Admin) */
+  updateFeatureRequestStatus: async (params: { id: number; status: FeatureStatus }): Promise<FeatureRequest> => {
+    const response = await apiClient.patch(API_PATHS.FEATURE_REQUESTS.UPDATE_STATUS(params.id), { status: params.status });
     return response.data;
   },
 };
 
+/** Hook to fetch feature requests */
 export const useFeatureRequests = () => {
   return useQuery({
-    queryKey: ["feature-requests"],
+    queryKey: QUERY_KEYS.FEATURE_REQUESTS.ALL,
     queryFn: featureRequestsApi.getFeatureRequests,
   });
 };
 
+/** Hook to create a feature request */
 export const useCreateFeatureRequest = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: featureRequestsApi.createFeatureRequest,
     onSuccess: () => {
       toast.success("Feature request submitted successfully!");
-      queryClient.invalidateQueries({ queryKey: ["feature-requests"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FEATURE_REQUESTS.ALL });
     },
     onError: () => {
       toast.error("Failed to submit feature request.");
@@ -67,35 +66,17 @@ export const useCreateFeatureRequest = () => {
   });
 };
 
-export const useAcceptFeatureRequest = () => {
+/** Hook to update a feature request status */
+export const useUpdateFeatureRequestStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: featureRequestsApi.acceptFeatureRequest,
-    onSuccess: () => {
-      toast.success("Feature request accepted!");
-      queryClient.invalidateQueries({ queryKey: ["feature-requests"] });
+    mutationFn: featureRequestsApi.updateFeatureRequestStatus,
+    onSuccess: (data) => {
+      toast.success(`Feature request marked as ${data.status.toLowerCase()}`);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FEATURE_REQUESTS.ALL });
     },
-  });
-};
-
-export const useDeclineFeatureRequest = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: featureRequestsApi.declineFeatureRequest,
-    onSuccess: () => {
-      toast.success("Feature request declined.");
-      queryClient.invalidateQueries({ queryKey: ["feature-requests"] });
-    },
-  });
-};
-
-export const useCompleteFeatureRequest = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: featureRequestsApi.completeFeatureRequest,
-    onSuccess: () => {
-      toast.success("Feature request marked as completed!");
-      queryClient.invalidateQueries({ queryKey: ["feature-requests"] });
-    },
+    onError: () => {
+      toast.error("Failed to update feature request status.");
+    }
   });
 };

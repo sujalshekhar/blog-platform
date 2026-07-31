@@ -19,17 +19,28 @@ def create_blog(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Create a new blog (first version). Auth required."""
+    """
+    Create a new draft blog.
+    
+    Initializes a new blog group and creates the first version (v1) with DRAFT status.
+    Requires authentication.
+    """
     return BlogService(db).create_blog(current_user, data)
+
+from typing import Optional
 
 @router.get("/", response_model=List[BlogResponse])
 def get_approved_blogs(
     skip: int = 0, 
     limit: int = 100,
+    search: Optional[str] = None,
+    blog_type: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_order: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    """List all active, approved blogs. Publicly accessible."""
-    return BlogService(db).list_approved_blogs(skip, limit)
+    """List all active, approved blogs with search, filter, and sort capabilities. Publicly accessible."""
+    return BlogService(db).list_approved_blogs(skip, limit, search, blog_type, sort_by, sort_order)
 
 @router.get("/all", response_model=List[BlogResponse])
 def get_all_active_blogs(

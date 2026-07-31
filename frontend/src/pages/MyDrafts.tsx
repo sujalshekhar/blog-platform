@@ -1,14 +1,19 @@
+import { useState } from "react";
 import { useMyDrafts } from "@/features/blogs/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { BlogCard } from "@/components/blog/BlogCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export const MyDrafts = () => {
-  const { data: blogs, isLoading, error } = useMyDrafts();
+  const [page, setPage] = useState(1);
+  const limit = 9;
+  const skip = (page - 1) * limit;
 
-  if (isLoading) {
+  const { data: blogs, isLoading, error } = useMyDrafts(skip, limit);
+
+  if (isLoading && page === 1) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -24,7 +29,7 @@ export const MyDrafts = () => {
     );
   }
 
-  if (!blogs || blogs.length === 0) {
+  if ((!blogs || blogs.length === 0) && page === 1) {
     return (
       <div className="text-center py-16 space-y-4">
         <h2 className="text-2xl font-bold">No drafts found</h2>
@@ -48,34 +53,43 @@ export const MyDrafts = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {blogs.map((blog) => (
-          <Card key={blog.id} className="group overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-primary/5 flex flex-col">
-            <CardHeader>
-              <div className="flex justify-between items-start mb-2">
-                <Badge variant="outline">DRAFT</Badge>
-                <span className="text-xs text-muted-foreground">v{blog.version}</span>
+        {blogs?.map((blog) => (
+          <BlogCard 
+            key={blog.id}
+            blog={blog}
+            headerBadge={
+              <Badge variant="outline">DRAFT</Badge>
+            }
+            footerActions={
+              <div className="flex gap-2 w-full">
+                <Button asChild variant="outline" className="flex-1">
+                  <Link to={`/blogs/${blog.blog_group_id}`}>Preview</Link>
+                </Button>
+                <Button asChild variant="default" className="flex-1">
+                  <Link to={`/blogs/${blog.blog_group_id}/edit`}>Edit</Link>
+                </Button>
               </div>
-              <CardTitle className="line-clamp-2">{blog.title}</CardTitle>
-              <CardDescription>
-                Last edited {new Date(blog.updated_at).toLocaleDateString()}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <div 
-                className="text-sm text-muted-foreground line-clamp-3"
-                dangerouslySetInnerHTML={{ __html: blog.content }} 
-              />
-            </CardContent>
-            <CardFooter className="gap-2">
-              <Button asChild variant="outline" className="w-full">
-                <Link to={`/blogs/${blog.blog_group_id}`}>Preview</Link>
-              </Button>
-              <Button asChild variant="default" className="w-full">
-                <Link to={`/blogs/${blog.blog_group_id}/edit`}>Edit</Link>
-              </Button>
-            </CardFooter>
-          </Card>
+            }
+          />
         ))}
+      </div>
+
+      <div className="flex items-center justify-between mt-8">
+        <Button
+          variant="outline"
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+          disabled={page === 1 || isLoading}
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+        </Button>
+        <span className="text-sm text-muted-foreground">Page {page}</span>
+        <Button
+          variant="outline"
+          onClick={() => setPage(p => p + 1)}
+          disabled={!blogs || blogs.length < limit || isLoading}
+        >
+          Next <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

@@ -13,13 +13,17 @@ from app.repositories.feature_request_repository import FeatureRequestRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.sse.manager import manager
+from app.constants import messages, notifications
 
 class FeatureRequestService:
+    """Service layer for feature request business logic."""
+    
     def __init__(self, db: Session):
         self.db = db
         self.repo = FeatureRequestRepository(db)
 
     def create_request(self, user: User, data: FeatureRequestCreate, background_tasks: BackgroundTasks) -> FeatureRequestResponse:
+        """Create a new feature request and broadcast notification to admins."""
         fr = FeatureRequest(
             title=data.title,
             description=data.description,
@@ -30,24 +34,30 @@ class FeatureRequestService:
         )
         new_fr = self.repo.create(fr)
 
-        # Notify admins
         user_repo = UserRepository(self.db)
         notif_repo = NotificationRepository(self.db)
         admins = user_repo.get_by_roles([UserRole.ADMIN])
 
         message_data = {
-            "title": "New Feature Request",
-            "message": f"{user.first_name} requested: '{new_fr.title}'",
+            "title": notifications.NOTIF_TITLE_NEW_FEATURE,
+            "message": notifications.notif_msg_new_feature(new_fr.title, user.first_name),
             "feature_request_id": new_fr.id
         }
 
+        new_notifications = []
         for admin in admins:
-            notif = Notification(
-                user_id=admin.id,
-                type=NotificationType.FEATURE_REQUESTED,
-                content=json.dumps(message_data),
+            new_notifications.append(
+                Notification(
+                    user_id=admin.id,
+                    type=NotificationType.FEATURE_REQUESTED,
+                    content=json.dumps(message_data),
+                )
             )
-            notif_repo.create(notif)
+            
+        notif_repo.bulk_create(new_notifications)
+        
+        self.db.commit()
+        self.db.refresh(new_fr)
             
         background_tasks.add_task(
             manager.broadcast_to_roles,
@@ -58,21 +68,21 @@ class FeatureRequestService:
         return FeatureRequestResponse.model_validate(new_fr)
 
     def update_status(self, request_id: int, admin: User, new_status: FeatureStatus, background_tasks: BackgroundTasks) -> FeatureRequestResponse:
+        """Update the status of a feature request and notify the original requester."""
         fr = self.repo.get_by_id(request_id)
         if not fr:
-            raise HTTPException(status_code=404, detail="Feature request not found")
+            raise HTTPException(status_code=404, detail=messages.ERR_FEATURE_REQUEST_NOT_FOUND)
 
         updated_fr = self.repo.update_status(request_id, new_status)
         if not updated_fr:
-            raise HTTPException(status_code=404, detail="Feature request not found")
+            raise HTTPException(status_code=404, detail=messages.ERR_FEATURE_REQUEST_NOT_FOUND)
 
-        # Notify the original requester
         notif_repo = NotificationRepository(self.db)
         status_display = new_status.value.capitalize()
         
         message_data = {
-            "title": f"Feature Request {status_display}",
-            "message": f"Your feature request '{updated_fr.title}' is now {status_display}.",
+            "title": notifications.NOTIF_TITLE_FEATURE_STATUS,
+            "message": notifications.notif_msg_feature_status(updated_fr.title, status_display),
             "feature_request_id": updated_fr.id
         }
         
@@ -82,6 +92,9 @@ class FeatureRequestService:
             content=json.dumps(message_data),
         )
         notif_repo.create(notif)
+        
+        self.db.commit()
+        self.db.refresh(updated_fr)
 
         background_tasks.add_task(
             manager.send_personal_message,
@@ -92,6 +105,7 @@ class FeatureRequestService:
         return FeatureRequestResponse.model_validate(updated_fr)
 
     def list_requests(self, user: User, skip: int = 0, limit: int = 100) -> List[FeatureRequestResponse]:
+        """List feature requests based on user role (Admin sees all, Users see their own)."""
         if user.role == UserRole.ADMIN:
             reqs = self.repo.list_all(skip, limit)
         else:
