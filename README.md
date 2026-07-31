@@ -2,7 +2,9 @@
 
 A modern, full-stack, enterprise-grade blogging platform designed with robust content moderation, version control, and real-time interactions.
 
-![Platform Overview](docs/architecture.dsl) <!-- Replace with an actual screenshot or diagram in production -->
+### 🔴 Live Demo
+- **Frontend (Vercel):** [https://blog.sujalshekhar.com/](https://blog.sujalshekhar.com/)
+- **Backend API (Render):** [https://blog-platform-md24.onrender.com/docs](https://blog-platform-md24.onrender.com/docs)
 
 ## 🌟 Key Features
 
