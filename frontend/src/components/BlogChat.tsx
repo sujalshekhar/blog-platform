@@ -50,9 +50,7 @@ export function BlogChat({ blogGroupId }: BlogChatProps) {
 
     const handleNewMessage = (e: CustomEvent) => {
       const msgData = e.detail;
-      console.log("Received WebSocket event:", msgData);
       if (msgData.type === "new_message") {
-        console.log("Adding new message to state:", msgData.message);
         setShouldAutoScroll(true); // force scroll on new message
         setNewMessages((prev) => [...prev, msgData.message]);
       }

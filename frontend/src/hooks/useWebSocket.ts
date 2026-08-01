@@ -38,7 +38,6 @@ export function useWebSocket(isAuthenticated: boolean) {
 
         socket.onopen = () => {
           if (ws.current === socket) {
-            console.log("WebSocket connected");
             setIsConnected(true);
             reconnectAttempts.current = 0; // Reset attempts on success
           }
@@ -46,14 +45,12 @@ export function useWebSocket(isAuthenticated: boolean) {
 
         socket.onclose = (event) => {
           if (ws.current === socket) {
-            console.log("WebSocket disconnected", event.code);
             setIsConnected(false);
             ws.current = null;
             
             // Reconnect logic
             if (event.code !== 1000 && reconnectAttempts.current < maxReconnectAttempts) {
               const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 10000);
-              console.log(`Reconnecting in ${timeout}ms...`);
               reconnectTimeout.current = setTimeout(() => {
                 reconnectAttempts.current += 1;
                 connect();
@@ -77,7 +74,6 @@ export function useWebSocket(isAuthenticated: boolean) {
           } catch (e) {
             // Might be plain text like 'pong'
             if (event.data === "pong") {
-              console.log("Received pong from server");
             }
           }
         };

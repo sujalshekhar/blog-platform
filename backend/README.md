@@ -1,6 +1,6 @@
 # BlogPlatform Backend ⚙️
 
-This is the highly scalable, event-driven FastAPI backend powering the BlogPlatform. It is designed following strict enterprise patterns to ensure performance, maintainability, and data integrity.
+This is the event-driven FastAPI backend powering the BlogPlatform. It is built using scalable architecture patterns to ensure performance, maintainability, and data integrity.
 
 ### 🔴 Live API Docs
 - **Swagger UI:** [https://blog-platform-md24.onrender.com/docs](https://blog-platform-md24.onrender.com/docs)
@@ -12,13 +12,12 @@ This is the highly scalable, event-driven FastAPI backend powering the BlogPlatf
 
 We carefully selected our backend technologies to maximize developer velocity, type safety, and real-time capabilities.
 
-- **FastAPI (Python 3.10+):** Chosen for its exceptional performance (thanks to Starlette and Pydantic) and native async support. It provides automatic interactive documentation (Swagger UI) and strict type validation out of the box, drastically reducing runtime errors.
-- **SQLAlchemy (ORM):** Used for database interactions. It provides a powerful, database-agnostic way to handle complex queries, relationships, and transactions.
-- **SQLite (Development) / PostgreSQL (Production):** The platform is configured to use SQLite for easy local development but is fully ready to be swapped to PostgreSQL for production deployments.
-- **Redis (Caching):** Utilized to cache heavy read operations (like fetching active blogs). We implement a **Cache-Aside Pattern**—if Redis goes down, the application "fails open" and degrades gracefully to database queries without crashing.
+- **FastAPI (Python 3.10+):** Chosen for its high performance and native async support. It provides automatic OpenAPI documentation generation and integrates with Pydantic for strict request validation and serialization.
+- **SQLAlchemy (ORM):** Provides ORM capabilities for database interaction. It abstracts complex queries and integrates cleanly with our application-level transaction management.
+- **PostgreSQL:** The primary relational database used for production and development, chosen for its strict data integrity and reliability.
+- **Redis:** Utilized to cache blog detail retrieval. We implement a **Cache-Aside Pattern**—if Redis goes down, the application "fails open" and degrades gracefully to database queries without crashing. The cache is automatically invalidated whenever the active blog version changes.
 - **WebSockets:** Used specifically for the Live Chat feature to enable real-time, bi-directional communication between users on a blog post.
 - **Server-Sent Events (SSE):** Used for system notifications. Since notifications only flow one way (Server -> Client), SSE is far more lightweight and resource-efficient than WebSockets for this use case.
-- **Passlib (Bcrypt) & Python-Jose:** Used for secure password hashing and stateless JWT (JSON Web Token) authentication.
 
 ---
 
@@ -28,17 +27,37 @@ This backend strictly enforces clean architecture principles:
 
 1. **Controller-Service-Repository Pattern:**
    - **Controllers (Routers):** Extremely thin. They solely handle receiving the HTTP request, validating the payload via Pydantic, and passing the data to the Service layer.
-   - **Services:** Contain 100% of the business logic. They enforce rules, orchestrate multiple repositories, and manage transaction boundaries.
-   - **Repositories:** Contain 100% of the database logic. They execute CRUD operations but *do not commit* transactions, allowing the Service layer to compose multiple operations into a single transaction.
+   - **Services:** Contain the primary business logic. They enforce rules, orchestrate multiple repositories, and own the transaction boundaries (commits and rollbacks).
+   - **Repositories:** Encapsulate database access. They execute CRUD operations and may call `db.flush()` to execute SQL and retrieve generated IDs, but they *never commit* transactions.
 
-2. **Single ACID Transactions:**
-   - Complex operations (e.g., updating a feature request status AND dispatching 10 notifications to admins) are wrapped in a single database transaction using `db.flush()` in the repository and `db.commit()` at the end of the Service method. If any part fails, the entire operation rolls back, preventing orphaned data.
+2. **Single Transaction Principle:**
+   - Related database operations (e.g., updating a feature request status AND dispatching notifications) are executed atomically. The service layer owns the transaction boundaries, ensuring that commits are only performed after all related repository operations succeed.
+
+---
+
+## 🏛️ Project Structure
+
+```text
+backend/
+├── alembic/          # Database migrations
+├── app/
+│   ├── api/          # FastAPI routers (Controllers)
+│   ├── core/         # Configuration, security utilities, and DB session management
+│   ├── dependencies/ # FastAPI dependencies (e.g., authentication, RBAC)
+│   ├── enums/        # String enums for statuses, roles, and types
+│   ├── models/       # SQLAlchemy declarative models
+│   ├── repositories/ # Database interaction layer
+│   ├── schemas/      # Pydantic schemas for request/response validation
+│   ├── services/     # Core business logic and transaction orchestration
+│   ├── sse/          # Server-Sent Events management
+│   └── websocket/    # WebSocket connection management for live chat
+```
 
 ---
 
 ## 📡 API Endpoints Overview
 
-The API is versioned under `/api/v1`. Below is a comprehensive list of the core endpoints and how they function.
+The API is versioned under `/api/v1`. Below is a comprehensive list of the core endpoints.
 
 ### Authentication (`/auth`)
 - `POST /auth/register`: Creates a new user account, hashes the password, and saves it to the DB.
@@ -76,11 +95,44 @@ The API is versioned under `/api/v1`. Below is a comprehensive list of the core 
 
 ---
 
+## 🔒 Security
+
+Security is treated as a first-class citizen across the stack:
+- **Stateless Authentication (JWT):** Sessions are managed statelessly using JSON Web Tokens.
+- **Data Protection:** Passwords are never stored in plain text. `Passlib` is used with the **Bcrypt** algorithm to securely salt and hash passwords.
+- **Role-Based Access Control (RBAC):** Access rights are strictly enforced on protected routes through FastAPI dependencies.
+- **Input Validation:** Pydantic strictly validates and type-checks all incoming request payloads before any business logic executes.
+- **Secrets Management:** Sensitive data (e.g., Database URLs, JWT secrets) are managed strictly via environment variables.
+- **CORS Configuration:** Cross-Origin Resource Sharing is strictly configured to only allow requests from specific trusted front-end domains.
+
+---
+
+## 🧪 Testing
+
+Backend testing relies on FastAPI's `TestClient` combined with `pytest`.
+
+```bash
+cd backend
+pytest -v
+```
+
+---
+
+## 🚢 Deployment
+
+The current production deployment stack consists of:
+- **Backend API:** Hosted on Render as a web service.
+- **Database:** Managed PostgreSQL instance.
+- **Cache:** Managed Redis instance.
+- **Frontend:** Hosted on Vercel.
+
+---
+
 ## 🚀 Quick Start & Setup
 
 ### 1. Prerequisites
 - Python 3.10+
-- Redis Server (Must be running locally on port `6379`)
+- PostgreSQL & Redis Server (Running locally)
 
 ### 2. Setup Virtual Environment
 ```bash
@@ -109,7 +161,7 @@ JWT_SECRET=your_super_secret_key
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# CORS Configuration (Required if Frontend is on a different domain like Vercel)
+# CORS Configuration
 FRONTEND_URL=https://blog.sujalshekhar.com
 ```
 
@@ -119,6 +171,5 @@ uvicorn app.main:app --reload
 ```
 The API will be available at `http://127.0.0.1:8000`.
 
-### 5. Access Interactive API Docs
-FastAPI automatically generates interactive Swagger documentation. 
+### 6. Access Interactive API Docs
 Visit: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) to explore and test the endpoints directly from your browser!
